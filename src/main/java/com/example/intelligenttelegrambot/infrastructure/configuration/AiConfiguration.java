@@ -5,6 +5,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.memory.InMemoryChatMemory;
+import org.springframework.ai.document.DocumentReader;
+import org.springframework.ai.document.DocumentTransformer;
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.reader.TextReader;
 import org.springframework.ai.transformer.splitter.TokenTextSplitter;
@@ -22,14 +24,24 @@ import java.io.StringBufferInputStream;
 import java.io.StringReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.function.Supplier;
 
 @Configuration(proxyBeanMethods = false)
 public class AiConfiguration {
     private static final Logger logger = LoggerFactory.getLogger(AiConfiguration.class);
 
     @Bean
+    DocumentTransformer documentTransformer() {
+        return new TokenTextSplitter();
+    }
+
+    TextReader documentReader(String url) {
+        return new TextReader(url);
+    }
+
+    @Bean
     CommandLineRunner ingestTermOfServiceToVectorStore(
-            EmbeddingModel embeddingModel, VectorStore vectorStore) {
+            EmbeddingModel embeddingModel, VectorStore vectorStore, DocumentTransformer documentTransformer) {
 
         return args -> {
             // Ingest the document into the vector store
@@ -40,9 +52,11 @@ public class AiConfiguration {
                     .text();
             Path path = Path.of("content.txt");
             Files.write(path, text.getBytes());
+            TextReader textReader = documentReader(path.toUri().toString());
+            textReader.getCustomMetadata().put("filename", path.toString());
             vectorStore.write(
-                    new TokenTextSplitter().transform(
-                            new TextReader(path.toUri().toString()).read()));
+                    documentTransformer.transform(
+                            textReader.read()));
 
 //            vectorStore.similaritySearch("Cancelling Bookings").forEach(doc -> {
 //                logger.info("Similar Document: {}", doc.getContent());
