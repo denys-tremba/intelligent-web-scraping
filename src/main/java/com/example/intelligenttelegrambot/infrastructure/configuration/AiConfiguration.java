@@ -1,5 +1,6 @@
 package com.example.intelligenttelegrambot.infrastructure.configuration;
 
+import com.example.intelligenttelegrambot.customer.EtlPipelineService;
 import org.jsoup.Jsoup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,7 +42,7 @@ public class AiConfiguration {
 
     @Bean
     CommandLineRunner ingestTermOfServiceToVectorStore(
-            EmbeddingModel embeddingModel, VectorStore vectorStore, DocumentTransformer documentTransformer) {
+            EtlPipelineService etlPipelineService) {
 
         return args -> {
             // Ingest the document into the vector store
@@ -52,22 +53,9 @@ public class AiConfiguration {
                     .text();
             Path path = Path.of("content.txt");
             Files.write(path, text.getBytes());
-            TextReader textReader = documentReader(path.toUri().toString());
-            textReader.getCustomMetadata().put("filename", path.toString());
-            vectorStore.write(
-                    documentTransformer.transform(
-                            textReader.read()));
-
-//            vectorStore.similaritySearch("Cancelling Bookings").forEach(doc -> {
-//                logger.info("Similar Document: {}", doc.getContent());
-//            });
+            etlPipelineService.performPipeline(path.toUri().toString());
         };
     }
-
-//    @Bean
-//    public VectorStore vectorStore(EmbeddingModel embeddingModel) {
-//        return new SimpleVectorStore(embeddingModel);
-//    }
 
     @Bean
     public ChatMemory chatMemory() {

@@ -16,6 +16,7 @@
 
 package com.example.intelligenttelegrambot.customer;
 
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
@@ -55,7 +56,6 @@ public class CustomerSupportAssistant {
     public CustomerSupportAssistant(ApplicationEventPublisher eventPublisher, ChatClient.Builder modelBuilder, VectorStore vectorStore, ChatMemory chatMemory) {
         this.eventPublisher = eventPublisher;
 
-        // @formatter:off
 		this.chatClient = modelBuilder
 				.defaultSystem("""
 						You are a chat support agent in a web site content understanding tasks.
@@ -80,21 +80,29 @@ public class CustomerSupportAssistant {
 
 				.build();
 
-		// @formatter:on
     }
 
     public String chat(String chatId, String userMessageContent) {
         eventPublisher.publishEvent(new PriorPromptProcessingEvent(this));
 
-        ChatResponse chatResponse = this.chatClient.prompt().system(s -> s.param("current_date", LocalDate.now().toString())).user(userMessageContent).advisors(a -> a.param(CHAT_MEMORY_CONVERSATION_ID_KEY, chatId).param(CHAT_MEMORY_RETRIEVE_SIZE_KEY, 100)).call().chatResponse();
-		Set<String> sources = chatResponse.getMetadata()
+        ChatResponse chatResponse = this.chatClient.prompt()
+				.system(s -> s.param("current_date", LocalDate.now().toString()))
+				.user(userMessageContent)
+				.advisors(a -> a.param(CHAT_MEMORY_CONVERSATION_ID_KEY, chatId).param(CHAT_MEMORY_RETRIEVE_SIZE_KEY, 100))
+				.call()
+				.chatResponse();
+		String content = chatResponse.getResult().getOutput().getContent();
+		return "%s Source of truth: %s".formatted(content, getSources(chatResponse));
+    }
+
+	@NotNull
+	private Set<String> getSources(ChatResponse chatResponse) {
+		return chatResponse.getMetadata()
 				.<List<Document>>getOrDefault(RETRIEVED_DOCUMENTS, Collections::emptyList)
 				.stream()
 				.map(this::map)
 				.collect(toSet());
-		String content = chatResponse.getResult().getOutput().getContent();
-		return content + " Source of truth: " + sources;
-    }
+	}
 
 	private String map(Document document) {
 		return document.getMetadata().getOrDefault("source","chat memory").toString();
