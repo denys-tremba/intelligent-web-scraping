@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.example.intelligenttelegrambot.customer;
+package com.example.intelligenttelegrambot.scrapping;
 
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -28,34 +28,42 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.ai.vectorstore.filter.Filter;
+import org.springframework.ai.vectorstore.filter.FilterExpressionBuilder;
+import org.springframework.ai.vectorstore.filter.FilterExpressionTextParser;
+import org.springframework.ai.vectorstore.filter.antlr4.FiltersParser;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 
+import java.net.URI;
 import java.time.LocalDate;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
+import static com.example.intelligenttelegrambot.scrapping.RagPipelineService.WEBSITE_CONTEXT_ROOT_KEY;
 import static java.util.stream.Collectors.*;
 import static org.springframework.ai.chat.client.advisor.AbstractChatMemoryAdvisor.CHAT_MEMORY_CONVERSATION_ID_KEY;
 import static org.springframework.ai.chat.client.advisor.AbstractChatMemoryAdvisor.CHAT_MEMORY_RETRIEVE_SIZE_KEY;
-import static org.springframework.ai.chat.client.advisor.QuestionAnswerAdvisor.*;
+import static org.springframework.ai.chat.client.advisor.QuestionAnswerAdvisor.FILTER_EXPRESSION;
+import static org.springframework.ai.chat.client.advisor.QuestionAnswerAdvisor.RETRIEVED_DOCUMENTS;
 
 /**
  * * @author Christian Tzolov
  */
 @Service
-public class CustomerSupportAssistant {
-    private static final Logger logger = LoggerFactory.getLogger(CustomerSupportAssistant.class);
+public class ScrappingAssistant {
+    private static final Logger logger = LoggerFactory.getLogger(ScrappingAssistant.class);
     private final ApplicationEventPublisher eventPublisher;
 
     private final ChatClient chatClient;
+	private final VectorStore vectorStore;
 
-    public CustomerSupportAssistant(ApplicationEventPublisher eventPublisher, ChatClient.Builder modelBuilder, VectorStore vectorStore, ChatMemory chatMemory) {
+	public ScrappingAssistant(ApplicationEventPublisher eventPublisher, ChatClient.Builder modelBuilder, VectorStore vectorStore, ChatMemory chatMemory) {
         this.eventPublisher = eventPublisher;
-
+		this.vectorStore = vectorStore;
 		this.chatClient = modelBuilder
 				.defaultSystem("""
 						You are a chat support agent in a web site content understanding tasks.
@@ -67,7 +75,7 @@ public class CustomerSupportAssistant {
 				.defaultAdvisors(
 //						new PromptChatMemoryAdvisor(chatMemory),
 //						new MessageChatMemoryAdvisor(chatMemory),
-						 new VectorStoreChatMemoryAdvisor(vectorStore),
+						new VectorStoreChatMemoryAdvisor(vectorStore),
 					
 						new QuestionAnswerAdvisor(vectorStore, SearchRequest.defaults()), // RAG
 						// new QuestionAnswerAdvisor(vectorStore, SearchRequest.defaults()
@@ -82,15 +90,20 @@ public class CustomerSupportAssistant {
 
     }
 
-    public String chat(String chatId, String userMessageContent) {
+    public String chat(String chatId, String userMessageContent, String websiteHost) {
         eventPublisher.publishEvent(new PriorPromptProcessingEvent(this));
 
-        ChatResponse chatResponse = this.chatClient.prompt()
+		ChatResponse chatResponse = this.chatClient.prompt()
 				.system(s -> s.param("current_date", LocalDate.now().toString()))
 				.user(userMessageContent)
-				.advisors(a -> a.param(CHAT_MEMORY_CONVERSATION_ID_KEY, chatId).param(CHAT_MEMORY_RETRIEVE_SIZE_KEY, 100))
+				.advisors(a -> a
+						.param(FILTER_EXPRESSION, WEBSITE_CONTEXT_ROOT_KEY + " == '" + websiteHost + "'")
+						.param(CHAT_MEMORY_CONVERSATION_ID_KEY, chatId + websiteHost)
+						.param(CHAT_MEMORY_RETRIEVE_SIZE_KEY, 100)
+				)
 				.call()
 				.chatResponse();
+
 		String content = chatResponse.getResult().getOutput().getContent();
 		return "%s Source of truth: %s".formatted(content, getSources(chatResponse));
     }
@@ -105,6 +118,7 @@ public class CustomerSupportAssistant {
 	}
 
 	private String map(Document document) {
-		return document.getMetadata().getOrDefault("source","chat memory").toString();
+		Map<String, Object> metadata = document.getMetadata();
+		return metadata.getOrDefault(RagPipelineService.SOURCE_OF_TRUTH_KEY,"").toString();
 	}
 }

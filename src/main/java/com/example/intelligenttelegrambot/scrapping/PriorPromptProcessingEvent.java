@@ -1,4 +1,4 @@
-package com.example.intelligenttelegrambot.customer;
+package com.example.intelligenttelegrambot.scrapping;
 
 import org.springframework.context.ApplicationEvent;
 
