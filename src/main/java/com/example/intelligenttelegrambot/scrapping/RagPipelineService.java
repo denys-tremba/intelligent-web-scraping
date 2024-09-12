@@ -30,22 +30,22 @@ public class RagPipelineService {
     }
 
 
-    public void performPipeline(Resource resource, URI uri) {
+    public void performPipeline(Resource resource, URI uri, String source) {
         try {
-            performPipeline(resource.getURI().toString(), uri);
+            performPipeline(resource.getURI().toString(), uri, source);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
-    public void performPipeline(String fileUri, URI uri) {
+    public void performPipeline(String fileUri, URI uri, String source) {
         TextReader textReader = new TextReader(fileUri);
         textReader.setCharset(UTF_8);
         textReader.getCustomMetadata().put(WEBSITE_CONTEXT_ROOT_KEY, uri.getHost());
-        textReader.getCustomMetadata().put(SOURCE_OF_TRUTH_KEY, uri.toString());
-        logger.info("Before rag pipeline");
+        textReader.getCustomMetadata().put(SOURCE_OF_TRUTH_KEY, source);
+        logger.info("Before rag pipeline {}", fileUri);
         vectorStore.write(
                 documentTransformer.transform(
                         textReader.read()));
-        logger.info("After rag pipeline");
+        logger.info("After rag pipeline {}", fileUri );
     }
 }

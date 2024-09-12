@@ -1,9 +1,12 @@
 package com.example.intelligenttelegrambot.telegram;
 
+import com.example.intelligenttelegrambot.scrapping.*;
 import com.example.intelligenttelegrambot.scrapping.Scrapper.UriAlreadyScrapedException;
-import com.example.intelligenttelegrambot.scrapping.ScrappingAssistant;
-import com.example.intelligenttelegrambot.scrapping.RagPipelineService;
-import com.example.intelligenttelegrambot.scrapping.Scrapper;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.ai.retry.NonTransientAiException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -16,8 +19,15 @@ import org.telegram.telegrambots.meta.api.objects.message.Message;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.meta.generics.TelegramClient;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -26,6 +36,7 @@ import java.util.regex.Pattern;
 
 @Component
 public class TelegramBotApiClient implements SpringLongPollingBot, LongPollingUpdateConsumer {
+    private static final Logger logger = LoggerFactory.getLogger(TelegramBotApiClient.class);
     public static final String SCRAPE = "scrape";
     private static final Pattern pattern = Pattern.compile("^/(scrape) (.*)$");
     private final TelegramClient telegramClient;
@@ -34,6 +45,7 @@ public class TelegramBotApiClient implements SpringLongPollingBot, LongPollingUp
     private final RagPipelineService ragPipelineService;
     Scrapper scrapper;
     private final ConcurrentMap <Long, String> hostnameByUserId = new ConcurrentHashMap<>();
+    ObjectMapper mapper = new XmlMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
     public TelegramBotApiClient(@Value("${bot.token}") String token, ScrappingAssistant supportAssistant, RagPipelineService ragPipelineService) {
         this.token = token;
@@ -44,17 +56,42 @@ public class TelegramBotApiClient implements SpringLongPollingBot, LongPollingUp
 
     }
 
-    private void doScraping(Update update, URI uri) {
+    private void scrape(Update update, URI baseUri) {
         Long chatId = update.getMessage().getChatId();
-        sendMessage(chatId, "Processing " + uri);
-        try {
-            Path path = scrapper.scrape(uri);
-            ragPipelineService.performPipeline(path.toUri().toString(), uri);
-            sendMessage(chatId, "Uri has been already scraped. I am ready to answer your questions.");
-        } catch (UriAlreadyScrapedException e) {
-            sendMessage(chatId, "Uri was previously scraped. I am ready to answer your questions.");
+        sendMessage(chatId, "Processing " + baseUri + ". This can take up to few minutes. Please wait...");
+        // sitemap
+        if (baseUri.toString().endsWith("sitemap.xml")) {
+            try {
+                SiteUrlSet siteUrlSet;
+                try (InputStream inputStream = baseUri.toURL().openStream()) {
+                    siteUrlSet = mapper.readValue(inputStream, SiteUrlSet.class);
+                }
+                siteUrlSet.urlSet = new HashSet<>(new ArrayList<>(siteUrlSet.urlSet).subList(0, 6));
+                siteUrlSet.urlSet.forEach(url->{
+                    doScraping(baseUri, chatId, url.location);
+                });
+                sendMessage(chatId, "Site has been already scraped. I am ready to answer your questions.");
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
-        hostnameByUserId.put(chatId, uri.getHost());
+        // single page
+        else {
+            doScraping(baseUri, update.getMessage().getChatId(), baseUri.toString());
+            sendMessage(chatId, "Site has been already scraped. I am ready to answer your questions.");
+        }
+
+        hostnameByUserId.put(chatId, baseUri.getHost());
+    }
+
+    private void doScraping(URI baseUri, Long chatId, String location) {
+        try {
+            logger.info("Before processing {}", location);
+            Path path = scrapper.scrape(URI.create(location));
+            ragPipelineService.performPipeline(path.toUri().toString(), baseUri, location);
+        } catch (UriAlreadyScrapedException e) {
+            sendMessage(chatId, "Uri %s has been already scraped".formatted(location));
+        }
     }
 
 
@@ -76,7 +113,11 @@ public class TelegramBotApiClient implements SpringLongPollingBot, LongPollingUp
         for (Update update : list) {
             Matcher matcher = pattern.matcher(update.getMessage().getText());
             if (matcher.matches()) {
-                doScraping(update, URI.create(matcher.group(2)));
+                try {
+                    scrape(update, new URL(matcher.group(2)).toURI());
+                } catch (URISyntaxException | MalformedURLException e) {
+                    sendMessage(update.getMessage().getChatId(), "Invalid url");
+                }
             } else {
                 SendMessage map = map(update);
                 consume(map);
@@ -106,7 +147,7 @@ public class TelegramBotApiClient implements SpringLongPollingBot, LongPollingUp
         Long chatId = message.getChatId();
         String reply = null;
         try {
-            reply = supportAssistant.chat(chatId.toString(), message.getText(), hostnameByUserId.getOrDefault(chatId, "gaia.cs.umass.edu"));
+            reply = supportAssistant.chat(chatId.toString(), message.getText(), hostnameByUserId.getOrDefault(chatId, "jenkov.com"));
         } catch (NonTransientAiException e) {
             return SendMessage.builder().disableWebPagePreview(true).chatId(chatId).text("Please try to resend message again in few minutes. I have reached my token limit...").build();
         }

@@ -13,7 +13,8 @@ public class Scrapper {
     public Path scrape(URI uri) throws UriAlreadyScrapedException {
         Path path = Path.of(uri.getHost() + uri.getPath() + ".txt");
         if (Files.exists(path)) {
-            throw new UriAlreadyScrapedException(uri);
+//            throw new UriAlreadyScrapedException(uri);
+            return path;
         }
         try {
             String text = Jsoup.connect(uri.toString())

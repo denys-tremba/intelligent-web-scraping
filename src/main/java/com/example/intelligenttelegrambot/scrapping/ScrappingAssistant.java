@@ -38,10 +38,7 @@ import org.springframework.stereotype.Service;
 
 import java.net.URI;
 import java.time.LocalDate;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static com.example.intelligenttelegrambot.scrapping.RagPipelineService.WEBSITE_CONTEXT_ROOT_KEY;
 import static java.util.stream.Collectors.*;
@@ -77,7 +74,7 @@ public class ScrappingAssistant {
 //						new MessageChatMemoryAdvisor(chatMemory),
 						new VectorStoreChatMemoryAdvisor(vectorStore),
 					
-						new QuestionAnswerAdvisor(vectorStore, SearchRequest.defaults()), // RAG
+						new QuestionAnswerAdvisor(vectorStore, SearchRequest.defaults().withTopK(2)), // RAG
 						// new QuestionAnswerAdvisor(vectorStore, SearchRequest.defaults()
 						// 	.withFilterExpression("'documentType' == 'terms-of-service' && region in ['EU', 'US']")),
 						
@@ -98,8 +95,9 @@ public class ScrappingAssistant {
 				.user(userMessageContent)
 				.advisors(a -> a
 						.param(FILTER_EXPRESSION, WEBSITE_CONTEXT_ROOT_KEY + " == '" + websiteHost + "'")
+						.param(CHAT_MEMORY_CONVERSATION_ID_KEY, chatId)
 						.param(CHAT_MEMORY_CONVERSATION_ID_KEY, chatId + websiteHost)
-						.param(CHAT_MEMORY_RETRIEVE_SIZE_KEY, 100)
+						.param(CHAT_MEMORY_RETRIEVE_SIZE_KEY, 10)
 				)
 				.call()
 				.chatResponse();
@@ -109,16 +107,13 @@ public class ScrappingAssistant {
     }
 
 	@NotNull
-	private Set<String> getSources(ChatResponse chatResponse) {
-		return chatResponse.getMetadata()
-				.<List<Document>>getOrDefault(RETRIEVED_DOCUMENTS, Collections::emptyList)
-				.stream()
-				.map(this::map)
-				.collect(toSet());
+	private String getSources(ChatResponse chatResponse) {
+		List<Document> documents = chatResponse.getMetadata()
+				.<List<Document>>get(RETRIEVED_DOCUMENTS);
+		if (documents == null || documents.isEmpty()) {
+			return "";
+		}
+		return documents.get(0).getMetadata().getOrDefault(RagPipelineService.SOURCE_OF_TRUTH_KEY,"").toString();
 	}
 
-	private String map(Document document) {
-		Map<String, Object> metadata = document.getMetadata();
-		return metadata.getOrDefault(RagPipelineService.SOURCE_OF_TRUTH_KEY,"").toString();
-	}
 }
