@@ -8,6 +8,7 @@ import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.memory.InMemoryChatMemory;
 import org.springframework.ai.document.DocumentTransformer;
 import org.springframework.ai.reader.TextReader;
+import org.springframework.ai.transformer.splitter.TextSplitter;
 import org.springframework.ai.transformer.splitter.TokenTextSplitter;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
@@ -23,8 +24,8 @@ public class AiConfiguration {
     private static final Logger logger = LoggerFactory.getLogger(AiConfiguration.class);
 
     @Bean
-    DocumentTransformer documentTransformer() {
-        return new TokenTextSplitter(8192 ,400, 5,1000, false);
+    TextSplitter textSplitter() {
+        return new TokenTextSplitter();
     }
 
     @Bean

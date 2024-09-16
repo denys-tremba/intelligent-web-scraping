@@ -1,33 +1,27 @@
 package com.example.intelligenttelegrambot;
 
-import com.example.intelligenttelegrambot.infrastructure.configuration.AiConfiguration;
-import com.example.intelligenttelegrambot.scrapping.RagPipelineService;
-import com.example.intelligenttelegrambot.scrapping.Scrapper;
-import com.example.intelligenttelegrambot.scrapping.SiteUrl;
-import com.example.intelligenttelegrambot.scrapping.SiteUrlSet;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.dataformat.xml.XmlMapper;
-import org.jsoup.Jsoup;
+import com.vladsch.flexmark.html2md.converter.FlexmarkHtmlConverter;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Import;
+import org.springframework.ai.document.Document;
+import org.springframework.ai.reader.TextReader;
+import org.springframework.ai.transformer.splitter.TokenTextSplitter;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
-@SpringBootTest()
+import static java.net.http.HttpResponse.BodyHandlers.ofString;
+
 public class RegexTest {
-    @Autowired RagPipelineService rag;
     @Test
     void testScrapeCommandRegex() {
         Pattern pattern = Pattern.compile("^/(scrape) (.*)$");
@@ -37,5 +31,25 @@ public class RegexTest {
         Assertions.assertEquals("https://gist.github.com/skeller88/5eb73dc0090d4ff1249a", matcher.group(2));
     }
 
+    @Test
+    void name() throws IOException, InterruptedException {
+        URI uri = URI.create("https://commonmark.org/");
+        HttpClient httpClient = HttpClient.newHttpClient();
+        HttpRequest request = HttpRequest.newBuilder(uri).build();
+        String body = httpClient.send(request, ofString()).body();
 
+        String md = FlexmarkHtmlConverter.builder().build().convert(body);
+
+    }
+
+    @Test
+    void name1() {
+        TextReader reader = new TextReader(Path.of("C:\\Users\\user\\SelfStudying\\Java\\intelligent-web-scrapping\\scrapes\\docs.spring.io\\spring-ai\\reference\\concepts.html.md").toUri().toString());
+        List<Document> documents = reader.get();
+        System.out.println(documents.size());
+        TokenTextSplitter textSplitter = new TokenTextSplitter();
+        List<Document> split = textSplitter.split(documents);
+        System.out.println(split.size());
+
+    }
 }

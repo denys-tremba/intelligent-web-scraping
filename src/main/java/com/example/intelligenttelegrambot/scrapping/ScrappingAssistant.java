@@ -63,10 +63,10 @@ public class ScrappingAssistant {
 		this.vectorStore = vectorStore;
 		this.chatClient = modelBuilder
 				.defaultSystem("""
-						You are a chat support agent in a web site content understanding tasks.
-						There is a context below. You MUST always refer to this context while providing
-						strict and helpful answers. If you do not know the exact answer you MUST respond
-						with phrase "I do not possess requested information".
+						You are a chat support agent. You are an expert in understanding markdown (especially CommonMark specification).
+						Your main task is to retrieve meaning from markdown and answer questions by referring to the context.
+						The context is below. You MUST always refer to this context while providing strict and helpful answers.
+						If you do not know the exact answer you MUST respond with phrase "I do not possess requested information".
 						Today is {current_date}.
 					""")
 				.defaultAdvisors(
@@ -96,7 +96,6 @@ public class ScrappingAssistant {
 				.advisors(a -> a
 						.param(FILTER_EXPRESSION, WEBSITE_CONTEXT_ROOT_KEY + " == '" + websiteHost + "'")
 						.param(CHAT_MEMORY_CONVERSATION_ID_KEY, chatId)
-						.param(CHAT_MEMORY_CONVERSATION_ID_KEY, chatId + websiteHost)
 						.param(CHAT_MEMORY_RETRIEVE_SIZE_KEY, 10)
 				)
 				.call()

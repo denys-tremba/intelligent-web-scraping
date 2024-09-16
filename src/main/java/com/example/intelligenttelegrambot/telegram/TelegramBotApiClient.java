@@ -109,7 +109,7 @@ public class TelegramBotApiClient implements SpringLongPollingBot, LongPollingUp
 
     @Override
     public void consume(List<Update> list) {
-
+        list = List.of(list.get(list.size() - 1));
         for (Update update : list) {
             Matcher matcher = pattern.matcher(update.getMessage().getText());
             if (matcher.matches()) {
