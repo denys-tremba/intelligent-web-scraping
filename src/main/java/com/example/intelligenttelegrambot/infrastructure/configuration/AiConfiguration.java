@@ -8,6 +8,7 @@ import org.springframework.ai.chat.memory.InMemoryChatMemory;
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.transformer.splitter.TextSplitter;
 import org.springframework.ai.transformer.splitter.TokenTextSplitter;
+import org.springframework.ai.transformers.TransformersEmbeddingModel;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -24,12 +25,7 @@ public class AiConfiguration {
     }
 
     @Bean
-    public ChatMemory chatMemory() {
-        return new InMemoryChatMemory();
-    }
-
-    @Bean
-    public VectorStore vectorStore(EmbeddingModel embeddingModel) {
-        return new EnhancedSimpleVectorStore(embeddingModel, Path.of("./store.json").toFile());
+    public EmbeddingModel embeddingModel() {
+        return new TransformersEmbeddingModel();
     }
 }

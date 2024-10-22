@@ -52,9 +52,11 @@ public class ScrappingAssistant {
 
     private final ChatClient chatClient;
 	private final VectorStore vectorStore;
+	private final ChatMemory chatMemory;
 
 	public ScrappingAssistant(ApplicationEventPublisher eventPublisher, ChatClient.Builder modelBuilder, VectorStore vectorStore, ChatMemory chatMemory) {
         this.eventPublisher = eventPublisher;
+		this.chatMemory = chatMemory;
 		this.vectorStore = vectorStore;
 		this.chatClient = modelBuilder
 				.defaultSystem("""
@@ -65,26 +67,19 @@ public class ScrappingAssistant {
 						Today is {current_date}.
 					""")
 				.defaultAdvisors(
-//						new PromptChatMemoryAdvisor(chatMemory),
-//						new MessageChatMemoryAdvisor(chatMemory),
-//						new VectorStoreChatMemoryAdvisor(vectorStore),
-					
-						new QuestionAnswerAdvisor(vectorStore, SearchRequest.defaults()), // RAG
-						// new QuestionAnswerAdvisor(vectorStore, SearchRequest.defaults()
-						// 	.withFilterExpression("'documentType' == 'terms-of-service' && region in ['EU', 'US']")),
-						
-						new SimpleLoggerAdvisor()
-				)
-						
-//				.defaultFunctions("getBookingDetails", "changeBooking", "cancelBooking") // FUNCTION CALLING
-
+						new SimpleLoggerAdvisor(),
+						new PromptChatMemoryAdvisor(chatMemory),
+						new QuestionAnswerAdvisor(vectorStore, SearchRequest.defaults()))
 				.build();
 
     }
 
-    public String chat(String chatId, String userMessageContent, String websiteHost) {
-        eventPublisher.publishEvent(new PriorPromptProcessingEvent(this));
+	public void eraseConversation(String chatId) {
+		chatMemory.clear(chatId);
+	}
 
+    public String chat(String chatId, String userMessageContent) {
+        eventPublisher.publishEvent(new PriorPromptProcessingEvent(this));
 		ChatResponse chatResponse = this.chatClient.prompt()
 				.system(s -> s.param("current_date", LocalDate.now().toString()))
 				.user(userMessageContent)

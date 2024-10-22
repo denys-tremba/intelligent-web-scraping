@@ -2,12 +2,17 @@ package com.example.intelligenttelegrambot.scrapping;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.ai.document.Document;
+import org.springframework.ai.document.DocumentReader;
 import org.springframework.ai.reader.TextReader;
+import org.springframework.ai.reader.markdown.MarkdownDocumentReader;
+import org.springframework.ai.reader.markdown.config.MarkdownDocumentReaderConfig;
 import org.springframework.ai.transformer.splitter.TextSplitter;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.stereotype.Service;
 
 import java.net.URI;
+import java.util.List;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -27,12 +32,17 @@ public class RagPipelineService {
 
     public void performPipeline(String fileUri, URI uri, String source) {
 //        if(true) return;
-        TextReader textReader = new TextReader(fileUri);
-        textReader.setCharset(UTF_8);
-        textReader.getCustomMetadata().put(WEBSITE_CONTEXT_ROOT_KEY, uri.getHost());
-        textReader.getCustomMetadata().put(SOURCE_OF_TRUTH_KEY, source);
+        MarkdownDocumentReaderConfig.builder()
+                .build();
+        DocumentReader textReader = new MarkdownDocumentReader(fileUri);
+//        DocumentReader textReader = new TextReader(fileUri);
+//        textReader.setCharset(UTF_8);
+//        textReader.getCustomMetadata().put(WEBSITE_CONTEXT_ROOT_KEY, uri.getHost());
+//        textReader.getCustomMetadata().put(SOURCE_OF_TRUTH_KEY, source);
         logger.info("Before rag pipeline {}", fileUri);
-        vectorStore.add(textSplitter.apply(textReader.get()));
+        List<Document> documents = textReader.get();
+        documents = textSplitter.apply(documents);
+        vectorStore.add(documents);
         logger.info("After rag pipeline {}", fileUri);
     }
 }
