@@ -20,9 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.client.advisor.QuestionAnswerAdvisor;
-import org.springframework.ai.chat.client.advisor.SimpleLoggerAdvisor;
-import org.springframework.ai.chat.client.advisor.VectorStoreChatMemoryAdvisor;
+import org.springframework.ai.chat.client.advisor.*;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.document.Document;
@@ -47,9 +45,6 @@ import static org.springframework.ai.chat.client.advisor.AbstractChatMemoryAdvis
 import static org.springframework.ai.chat.client.advisor.QuestionAnswerAdvisor.FILTER_EXPRESSION;
 import static org.springframework.ai.chat.client.advisor.QuestionAnswerAdvisor.RETRIEVED_DOCUMENTS;
 
-/**
- * * @author Christian Tzolov
- */
 @Service
 public class ScrappingAssistant {
     private static final Logger logger = LoggerFactory.getLogger(ScrappingAssistant.class);
@@ -72,9 +67,9 @@ public class ScrappingAssistant {
 				.defaultAdvisors(
 //						new PromptChatMemoryAdvisor(chatMemory),
 //						new MessageChatMemoryAdvisor(chatMemory),
-						new VectorStoreChatMemoryAdvisor(vectorStore),
+//						new VectorStoreChatMemoryAdvisor(vectorStore),
 					
-						new QuestionAnswerAdvisor(vectorStore, SearchRequest.defaults().withTopK(2)), // RAG
+						new QuestionAnswerAdvisor(vectorStore, SearchRequest.defaults()), // RAG
 						// new QuestionAnswerAdvisor(vectorStore, SearchRequest.defaults()
 						// 	.withFilterExpression("'documentType' == 'terms-of-service' && region in ['EU', 'US']")),
 						
@@ -94,7 +89,7 @@ public class ScrappingAssistant {
 				.system(s -> s.param("current_date", LocalDate.now().toString()))
 				.user(userMessageContent)
 				.advisors(a -> a
-						.param(FILTER_EXPRESSION, WEBSITE_CONTEXT_ROOT_KEY + " == '" + websiteHost + "'")
+//						.param(FILTER_EXPRESSION, WEBSITE_CONTEXT_ROOT_KEY + " == '" + websiteHost + "'")
 						.param(CHAT_MEMORY_CONVERSATION_ID_KEY, chatId)
 						.param(CHAT_MEMORY_RETRIEVE_SIZE_KEY, 10)
 				)
@@ -108,7 +103,7 @@ public class ScrappingAssistant {
 	@NotNull
 	private String getSources(ChatResponse chatResponse) {
 		List<Document> documents = chatResponse.getMetadata()
-				.<List<Document>>get(RETRIEVED_DOCUMENTS);
+				.get(RETRIEVED_DOCUMENTS);
 		if (documents == null || documents.isEmpty()) {
 			return "";
 		}

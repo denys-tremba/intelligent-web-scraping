@@ -2,16 +2,12 @@ package com.example.intelligenttelegrambot.scrapping;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.ai.document.Document;
-import org.springframework.ai.document.DocumentTransformer;
 import org.springframework.ai.reader.TextReader;
 import org.springframework.ai.transformer.splitter.TextSplitter;
-import org.springframework.ai.vectorstore.PgVectorStore;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.stereotype.Service;
 
 import java.net.URI;
-import java.util.List;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 

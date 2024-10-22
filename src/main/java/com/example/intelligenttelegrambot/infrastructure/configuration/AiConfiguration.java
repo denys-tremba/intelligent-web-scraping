@@ -1,22 +1,17 @@
 package com.example.intelligenttelegrambot.infrastructure.configuration;
 
-import com.example.intelligenttelegrambot.scrapping.RagPipelineService;
-import org.jsoup.Jsoup;
+import com.example.intelligenttelegrambot.scrapping.EnhancedSimpleVectorStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.memory.InMemoryChatMemory;
-import org.springframework.ai.document.DocumentTransformer;
-import org.springframework.ai.reader.TextReader;
+import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.transformer.splitter.TextSplitter;
 import org.springframework.ai.transformer.splitter.TokenTextSplitter;
-import org.springframework.boot.CommandLineRunner;
+import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
 
-import java.net.URI;
-import java.nio.file.Files;
 import java.nio.file.Path;
 
 @Configuration(proxyBeanMethods = false)
@@ -31,5 +26,10 @@ public class AiConfiguration {
     @Bean
     public ChatMemory chatMemory() {
         return new InMemoryChatMemory();
+    }
+
+    @Bean
+    public VectorStore vectorStore(EmbeddingModel embeddingModel) {
+        return new EnhancedSimpleVectorStore(embeddingModel, Path.of("./store.json").toFile());
     }
 }
