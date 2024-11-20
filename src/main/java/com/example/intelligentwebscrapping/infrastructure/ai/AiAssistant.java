@@ -14,48 +14,43 @@
  * limitations under the License.
  */
 
-package com.example.intelligenttelegrambot.scrapping;
+package com.example.intelligentwebscrapping.infrastructure.ai;
 
+import com.example.intelligentwebscrapping.domain.Answer;
+import com.example.intelligentwebscrapping.domain.Conversation;
+import com.example.intelligentwebscrapping.domain.Question;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.client.advisor.*;
+import org.springframework.ai.chat.client.advisor.QuestionAnswerAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
-import org.springframework.ai.vectorstore.filter.Filter;
-import org.springframework.ai.vectorstore.filter.FilterExpressionBuilder;
-import org.springframework.ai.vectorstore.filter.FilterExpressionTextParser;
-import org.springframework.ai.vectorstore.filter.antlr4.FiltersParser;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 
-import java.net.URI;
 import java.time.LocalDate;
 import java.util.*;
 
-import static com.example.intelligenttelegrambot.scrapping.RagPipelineService.WEBSITE_CONTEXT_ROOT_KEY;
-import static java.util.stream.Collectors.*;
+import static com.example.intelligentwebscrapping.infrastructure.ai.EtlPipeline.WEBSITE_CONTEXT_ROOT_KEY;
 import static org.springframework.ai.chat.client.advisor.AbstractChatMemoryAdvisor.CHAT_MEMORY_CONVERSATION_ID_KEY;
 import static org.springframework.ai.chat.client.advisor.AbstractChatMemoryAdvisor.CHAT_MEMORY_RETRIEVE_SIZE_KEY;
 import static org.springframework.ai.chat.client.advisor.QuestionAnswerAdvisor.FILTER_EXPRESSION;
 import static org.springframework.ai.chat.client.advisor.QuestionAnswerAdvisor.RETRIEVED_DOCUMENTS;
 
 @Service
-public class ScrappingAssistant {
-    private static final Logger logger = LoggerFactory.getLogger(ScrappingAssistant.class);
-    private final ApplicationEventPublisher eventPublisher;
+public class AiAssistant implements IAiAssistant {
+    private static final Logger logger = LoggerFactory.getLogger(AiAssistant.class);
 
-    private final ChatClient chatClient;
+	private final ChatClient chatClient;
 	private final VectorStore vectorStore;
 	private final ChatMemory chatMemory;
 
-	public ScrappingAssistant(ApplicationEventPublisher eventPublisher, ChatClient.Builder modelBuilder, VectorStore vectorStore, ChatMemory chatMemory) {
-        this.eventPublisher = eventPublisher;
+	public AiAssistant(ChatClient.Builder modelBuilder,
+					   VectorStore vectorStore,
+					   ChatMemory chatMemory) {
 		this.chatMemory = chatMemory;
 		this.vectorStore = vectorStore;
 		this.chatClient = modelBuilder
@@ -67,9 +62,10 @@ public class ScrappingAssistant {
 						Today is {current_date}.
 					""")
 				.defaultAdvisors(
-						new SimpleLoggerAdvisor(),
-						new PromptChatMemoryAdvisor(chatMemory),
-						new QuestionAnswerAdvisor(vectorStore, SearchRequest.defaults()))
+//						new SimpleLoggerAdvisor(),
+//						new PromptChatMemoryAdvisor(chatMemory)
+						new QuestionAnswerAdvisor(vectorStore, SearchRequest.defaults())
+				)
 				.build();
 
     }
@@ -78,21 +74,21 @@ public class ScrappingAssistant {
 		chatMemory.clear(chatId);
 	}
 
-    public String chat(String chatId, String userMessageContent) {
-        eventPublisher.publishEvent(new PriorPromptProcessingEvent(this));
+    @Override
+	public Answer chat(Conversation conversation, Question question) {
 		ChatResponse chatResponse = this.chatClient.prompt()
 				.system(s -> s.param("current_date", LocalDate.now().toString()))
-				.user(userMessageContent)
+				.user(question.value())
 				.advisors(a -> a
-//						.param(FILTER_EXPRESSION, WEBSITE_CONTEXT_ROOT_KEY + " == '" + websiteHost + "'")
-						.param(CHAT_MEMORY_CONVERSATION_ID_KEY, chatId)
+						.param(FILTER_EXPRESSION, WEBSITE_CONTEXT_ROOT_KEY + " == '" + conversation.getUriHost() + "'")
+						.param(CHAT_MEMORY_CONVERSATION_ID_KEY, conversation.getConversationId().value())
 						.param(CHAT_MEMORY_RETRIEVE_SIZE_KEY, 10)
 				)
 				.call()
 				.chatResponse();
 
 		String content = chatResponse.getResult().getOutput().getContent();
-		return "%s Source of truth: %s".formatted(content, getSources(chatResponse));
+		return new Answer("%s Source of truth: %s".formatted(content, getSources(chatResponse)));
     }
 
 	@NotNull
@@ -102,7 +98,7 @@ public class ScrappingAssistant {
 		if (documents == null || documents.isEmpty()) {
 			return "";
 		}
-		return documents.get(0).getMetadata().getOrDefault(RagPipelineService.SOURCE_OF_TRUTH_KEY,"").toString();
+		return documents.get(0).getMetadata().getOrDefault(EtlPipeline.SOURCE_OF_TRUTH_KEY,"").toString();
 	}
 
 }

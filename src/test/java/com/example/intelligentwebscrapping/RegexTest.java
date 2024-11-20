@@ -1,5 +1,9 @@
-package com.example.intelligenttelegrambot;
+package com.example.intelligentwebscrapping;
 
+import com.deepl.api.DeepLException;
+import com.deepl.api.GlossaryLanguagePair;
+import com.deepl.api.TextResult;
+import com.deepl.api.Translator;
 import com.vladsch.flexmark.html2md.converter.FlexmarkHtmlConverter;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -7,15 +11,13 @@ import org.springframework.ai.document.Document;
 import org.springframework.ai.reader.TextReader;
 import org.springframework.ai.transformer.splitter.TokenTextSplitter;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -51,5 +53,39 @@ public class RegexTest {
         List<Document> split = textSplitter.split(documents);
         System.out.println(split.size());
 
+    }
+
+    @Test
+    void name5() throws DeepLException, InterruptedException {
+        String authKey = "36b47dfc-802f-4d03-a3e8-b0e164bb1749:fx";  // Replace with your key
+        Translator translator = new Translator(authKey);
+        TextResult result =
+                translator.translateText("Привіт світе!", Locale.forLanguageTag("Uk-ua").getLanguage(), "en-GB");
+        System.out.println(result.getBilledCharacters());
+        System.out.println(result.getText()); // "Bonjour, le monde !"
+    }
+
+    @Test
+    void name6() {
+        System.out.println(Locale.getDefault().getLanguage());
+        System.out.println(Locale.getDefault().getCountry());
+        System.out.println(Locale.getDefault().getDisplayName());
+        System.out.println(Locale.getDefault().getDisplayCountry());
+        System.out.println(Locale.getDefault().getISO3Country());
+        System.out.println(Locale.forLanguageTag("Uk-ua"));
+    }
+
+    @Test
+    void name7() throws DeepLException, InterruptedException {
+        String authKey = "36b47dfc-802f-4d03-a3e8-b0e164bb1749:fx";  // Replace with your key
+        Translator translator = new Translator(authKey);
+        List<GlossaryLanguagePair> glossaryLanguages =
+                translator.getGlossaryLanguages();
+        for (GlossaryLanguagePair glossaryLanguage : glossaryLanguages) {
+            System.out.printf("%s to %s\n",
+                    glossaryLanguage.getSourceLanguage(),
+                    glossaryLanguage.getTargetLanguage());
+            // Example: "en to de", "de to en", etc.
+        }
     }
 }
