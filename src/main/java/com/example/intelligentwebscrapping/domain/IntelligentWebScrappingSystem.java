@@ -1,9 +1,10 @@
 package com.example.intelligentwebscrapping.domain;
 
 import java.net.URI;
+import java.util.UUID;
 
 public class IntelligentWebScrappingSystem {
-    private Conversation conversation;
+    private Conversation conversation = new Conversation(new UserId(UUID.randomUUID().toString()));
     public void startConversation(UserId userId) {
         conversation = new Conversation(userId);
     }

@@ -1,0 +1,11 @@
+Question;Answer
+which extension API in JUnit Jupiter allows developers to either enable or disable a test class or test method based on certain conditions programmatically?;ExecutionCondition
+Which system requirements concerning Java version Hibernate 6.6 requires?; Java 11
+According to the layered structure of Hibernate, which layer it is on top of?;jdbc
+a thread safe and immutable factory for Hibernate Session instances?; SessionFactory
+Hibernate supports the mapping of Java enum as basic value types in a two number of ways: ordinal and ...?;string
+Which jdbc type is mapped to from byte[] by Hibernate?;VARBINARY
+Which jdbc type is mapped to from Duration by Hibernate?;NUMERIC
+What annotation you should use under class in case you prefer that JUnit Jupiter execute all test methods on the same test instance?;@TestInstance(Lifecycle.PER_CLASS)
+In contrast to the competing Runner, TestRule, and MethodRule extension points in JUnit 4, the JUnit Jupiter extension model consists of how many concepts?;only one
+How much test engines (TestEngine) is provided by Junit 5? Answer a number;three

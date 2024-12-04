@@ -14,4 +14,12 @@ public class QuestionAnswerPairs {
         questionAnswerPairs.add(new QuestionAnswerPair(question, answer));
 
     }
+
+    public List<QuestionAnswerPair> getQuestionAnswerPairs() {
+        return questionAnswerPairs;
+    }
+
+    public void setQuestionAnswerPairs(List<QuestionAnswerPair> questionAnswerPairs) {
+        this.questionAnswerPairs = questionAnswerPairs;
+    }
 }

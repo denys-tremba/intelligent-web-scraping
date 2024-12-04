@@ -19,12 +19,17 @@ public class HttpController {
         return "form";
     }
 
+    @GetMapping("/chat")
+    public String getConversationChatForm(Principal principal) {
+        return "conversation";
+    }
+
     @PostMapping("/create")
     public String startConversation(Principal principal, @RequestParam URI uri) {
 
         intelligentWebScrappingSystem.startConversation(new UserId(principal.getName()));
         intelligentWebScrappingSystem.enterUri(uri);
-        return "redirect:/conversation";
+        return "redirect:/conversation/chat";
     }
 
     @ResponseBody

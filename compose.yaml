@@ -9,6 +9,13 @@ services:
       - "org.springframework.boot.service-connection=postgres"
     ports:
       - '5432:5432'
+#  pgadmin:
+#    image: 'dpage/pgadmin4'
+#    environment:
+#      - 'PGADMIN_DEFAULT_EMAIL=denys@gmail.com'
+#      - 'PGADMIN_DEFAULT_PASSWORD=denys'
+#    ports:
+#      - '80:80'
 #  cassandra:
 #    image: 'cassandra:latest'
 #    environment:

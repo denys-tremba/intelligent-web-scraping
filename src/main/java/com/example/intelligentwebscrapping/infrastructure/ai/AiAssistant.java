@@ -56,15 +56,16 @@ public class AiAssistant implements IAiAssistant {
 		this.chatClient = modelBuilder
 				.defaultSystem("""
 						You are a chat support agent. You are an expert in understanding markdown (especially CommonMark specification).
-						Your main task is to retrieve meaning from markdown and answer questions by referring to the context.
-						The context is below. You MUST always refer to this context while providing strict and helpful answers.
-						If you do not know the exact answer you MUST respond with phrase "I do not possess requested information".
+						Your main task is to retrieve meaning from markdown snippets and answer questions by referring to the context.
+						You should always refer to the provided context while generating answers.
+						If you do not know the exact answer you should respond with phrase "I do not possess requested information".
+						Do your best for your responses to be clear and short as much as possible.
 						Today is {current_date}.
 					""")
 				.defaultAdvisors(
 //						new SimpleLoggerAdvisor(),
 //						new PromptChatMemoryAdvisor(chatMemory)
-						new QuestionAnswerAdvisor(vectorStore, SearchRequest.defaults())
+						new QuestionAnswerAdvisor(vectorStore, SearchRequest.defaults().withTopK(3))
 				)
 				.build();
 

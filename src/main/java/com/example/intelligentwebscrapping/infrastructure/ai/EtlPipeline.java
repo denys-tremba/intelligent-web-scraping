@@ -35,7 +35,7 @@ public class EtlPipeline {
         TextReader textReader = new TextReader(fileUri);
         textReader.setCharset(UTF_8);
         textReader.getCustomMetadata().put(WEBSITE_CONTEXT_ROOT_KEY, uri.getHost());
-        textReader.getCustomMetadata().put(SOURCE_OF_TRUTH_KEY, uri.toString());
+        textReader.getCustomMetadata().put(SOURCE_OF_TRUTH_KEY, uri.getPath());
         logger.info("Before rag pipeline {}", fileUri);
         List<Document> documents = textReader.get();
         documents = textSplitter.apply(documents);

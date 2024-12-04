@@ -88,4 +88,11 @@ public class RegexTest {
             // Example: "en to de", "de to en", etc.
         }
     }
+
+    @Test
+    void test8() {
+        System.out.println(Path.of("").toAbsolutePath());
+        System.out.println(Path.of(".").toAbsolutePath());
+        System.out.println(Path.of("./").toAbsolutePath());
+    }
 }
