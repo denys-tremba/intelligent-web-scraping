@@ -27,6 +27,8 @@ import org.springframework.ai.chat.client.advisor.QuestionAnswerAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.document.Document;
+import org.springframework.ai.evaluation.*;
+import org.springframework.ai.model.Content;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.stereotype.Service;
@@ -41,11 +43,14 @@ import static org.springframework.ai.chat.client.advisor.QuestionAnswerAdvisor.R
 
 @Service
 public class AiAssistant implements IAiAssistant {
-    private static final Logger logger = LoggerFactory.getLogger(AiAssistant.class);
+	private static final Logger logger = LoggerFactory.getLogger(AiAssistant.class);
+	public static final String UNCERTAINTY = "I cannot answer your question at the moment";
 
 	private final ChatClient chatClient;
 	private final VectorStore vectorStore;
 	private final ChatMemory chatMemory;
+	private final Evaluator factCheckingEvaluator;
+
 
 	public AiAssistant(ChatClient.Builder modelBuilder,
 					   VectorStore vectorStore,
@@ -57,15 +62,15 @@ public class AiAssistant implements IAiAssistant {
 				Answer the question based on the context below.
             	Context has format of markdown file snippets (especially CommonMark specification).
             	Keep the answer short and concise.
-            	Respond "I do not possess requested information" if not sure about the answer.
-					""")
+            	Respond "%s" if not sure about the answer.
+					""".formatted(UNCERTAINTY))
 				.defaultAdvisors(
 //						new SimpleLoggerAdvisor(),
 //						new PromptChatMemoryAdvisor(chatMemory)
 						new QuestionAnswerAdvisor(vectorStore, SearchRequest.defaults().withTopK(3))
 				)
 				.build();
-
+		factCheckingEvaluator = new RelevancyEvaluator(modelBuilder);
     }
 
 	public void eraseConversation(String chatId) {
@@ -85,9 +90,24 @@ public class AiAssistant implements IAiAssistant {
 				.call()
 				.chatResponse();
 
-		String content = chatResponse.getResult().getOutput().getContent();
-		return new Answer("%s Source of truth: %s".formatted(content, getSources(chatResponse)));
-    }
+		String claim = chatResponse.getResult().getOutput().getContent();
+
+		return interceptByGroundedFactualityTest(question, chatResponse, claim);
+	}
+
+	@NotNull
+	private Answer interceptByGroundedFactualityTest(Question question, ChatResponse chatResponse, String claim) {
+		List<Content> context = chatResponse.getMetadata().get(QuestionAnswerAdvisor.RETRIEVED_DOCUMENTS);
+		EvaluationRequest evaluationRequest = new EvaluationRequest(question.getQuestionValue(), context.subList(0,1), claim);
+		EvaluationResponse evaluationResponse = factCheckingEvaluator.evaluate(evaluationRequest);
+		if (!evaluationResponse.isPass()) {
+			logger.warn("Grounded factuality is failed with claim: {}\ncontext: {}", claim, context);
+			return new Answer(UNCERTAINTY);
+		} else {
+			logger.info("Grounded factuality is passed");
+			return new Answer("%s Source of truth: %s".formatted(claim, getSources(chatResponse)));
+		}
+	}
 
 	@NotNull
 	private String getSources(ChatResponse chatResponse) {

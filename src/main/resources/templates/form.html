@@ -28,7 +28,7 @@
             text-align: center;
         }
         #spinner {
-            margin-bottom: 10px;
+            margin: 0 auto 10px;
         }
         #spinner div {
             border: 4px solid transparent;
@@ -63,11 +63,11 @@
     <div id="spinner">
         <div></div>
     </div>
-    <p>Your URI is being processed...</p>
+    <p>Вебресурс в процесі опрацювання...</p>
 </div>
 
 <div class="container mx-auto p-4 flex-1 flex flex-col">
-    <h1 class="text-2xl font-bold mb-4 text-center text-gray-800">Conversation with URI Input</h1>
+    <h1 class="text-2xl font-bold mb-4 text-center text-gray-800">Ввід локатора</h1>
 
     <div class="mb-4 p-4 bg-white rounded-lg shadow">
         <form th:action="@{/conversation/create}" method="post" id="uri-form" class="flex items-center space-x-2">
@@ -75,7 +75,7 @@
                     type="url"
                     id="uri-input"
                     name="uri"
-                    placeholder="Enter URI..."
+                    placeholder="Наприклад: https://www.promptingguide.ai/techniques/fewshot"
                     class="flex-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     required
             >
@@ -83,7 +83,7 @@
                     type="submit"
                     class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-                Submit URI
+                Надіслати
             </button>
         </form>
     </div>

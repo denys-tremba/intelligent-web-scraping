@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LLM Chatbot</title>
+    <title>Розмови</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         #chat-messages a {
@@ -79,20 +79,20 @@
 </head>
 <body class="bg-gray-100 h-screen flex flex-col">
 <div class="container mx-auto p-4 flex-1 flex flex-col">
-    <h1 class="text-2xl font-bold mb-4 text-center text-gray-800">Conversation</h1>
+    <h1 class="text-2xl font-bold mb-4 text-center text-gray-800">Розмови</h1>
 
     <div class="flex-1 overflow-y-auto mb-4 p-4 bg-white rounded-lg shadow">
         <div id="chat-messages" class="space-y-4">
             <div class="conversation-item" th:each="conversation : ${conversations}">
                 <a th:text="${conversation.uriHost}" th:href="@{/conversation/{id}(id=${conversation.conversationId})}">placeholder</a>
                 <form method="post" th:action="@{/conversation/{id}/delete(id=${conversation.conversationId})}">
-                    <button>delete</button>
+                    <button>Видалити</button>
                 </form>
             </div>
         </div>
     </div>
 
-    <a id = "add-new-anchor" th:href="@{/conversation}">Create new</a>
+    <a id = "add-new-anchor" th:href="@{/conversation}">Створити нову</a>
 </div>
 
 </body>

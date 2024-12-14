@@ -20,4 +20,7 @@ public class ArtificialIntelligenceFacade {
     public Answer prompt(Conversation conversation, Question question) {
         return IAiAssistant.chat(conversation, question);
     }
+    public Answer promptStreaming(Conversation conversation, Question question) {
+        return IAiAssistant.chat(conversation, question);
+    }
 }

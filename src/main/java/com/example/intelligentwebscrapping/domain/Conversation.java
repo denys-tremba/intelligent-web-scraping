@@ -38,8 +38,18 @@ public class Conversation {
         questionAnswerPairs.makeNewPair(question, answer);
     }
 
+    public void askQuestionStreaming(String value) {
+        Question question = new Question(value);
+        Answer answer = ApplicationContextProvider.instance().applicationContext().getBean(ArtificialIntelligenceFacade.class).prompt(this, question);
+        questionAnswerPairs.makeNewPair(question, answer);
+    }
+
     public Answer getLastAnswer() {
         return questionAnswerPairs.getAnswerForLastQuestion();
+    }
+
+    public URI getUri() {
+        return uri;
     }
 
     public String getUriHost() {

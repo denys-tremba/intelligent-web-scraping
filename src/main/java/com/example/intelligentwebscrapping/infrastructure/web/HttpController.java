@@ -42,6 +42,8 @@ public class HttpController {
     public String getConversationChatForm(Principal principal, @PathVariable String id, Model model) {
         Conversation conversation = conversationRepository.findById(Long.parseLong(id)).orElseThrow();
         model.addAttribute("conversation", conversation);
+        model.addAttribute("uri", conversation.getUri().toString());
+        model.addAttribute("uriHost", conversation.getUri().getHost());
         intelligentWebScrappingSystem.setConversation(conversation);
         return "conversation";
     }

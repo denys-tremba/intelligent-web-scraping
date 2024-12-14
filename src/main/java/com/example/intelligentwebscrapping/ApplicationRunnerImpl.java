@@ -32,7 +32,7 @@ public class ApplicationRunnerImpl implements ApplicationRunner {
             	Answer the question based on the context below.
             	Context has format of markdown file snippets (especially CommonMark specification).
             	Keep the answer short and concise.
-            	Respond "I do not possess requested information" if not sure about the answer.
+            	Respond "I cannot answer your question at the moment" if not sure about the answer.
             """;
     private final ChatClient chatClient;
     private final Evaluator factCheckingEvaluator;
@@ -54,7 +54,7 @@ public class ApplicationRunnerImpl implements ApplicationRunner {
             Question question = pair.getQuestion();
             ChatResponse chatResponse = chatClient.prompt().system(QUERY_SYSTEM).user(question.getQuestionValue()).call().chatResponse();
             String claim = chatResponse.getResult().getOutput().getContent();
-            if (claim.contains("I do not possess")) {
+            if (claim.contains("I cannot")) {
                 stats.incrementMissing();
                 continue;
             }

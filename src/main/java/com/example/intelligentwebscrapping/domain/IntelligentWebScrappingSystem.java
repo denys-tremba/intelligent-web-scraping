@@ -15,7 +15,9 @@ public class IntelligentWebScrappingSystem {
     public void askQuestion(String question) {
         conversation.askQuestion(question);
     }
-
+    public void askQuestionStreaming(String question) {
+        conversation.askQuestionStreaming(question);
+    }
     public Answer getLastAnswer() {
         return conversation.getLastAnswer();
     }

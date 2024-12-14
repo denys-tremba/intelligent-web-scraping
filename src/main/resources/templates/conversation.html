@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LLM Chatbot</title>
+    <title>Розмова</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .message-content {
@@ -20,17 +20,19 @@
 </head>
 <body class="bg-gray-100 h-screen flex flex-col">
 <div class="container mx-auto p-4 flex-1 flex flex-col">
-    <h1 class="text-2xl font-bold mb-4 text-center text-gray-800">Conversation</h1>
+    <h2 class="text-2xl mb-4 text-center">
+        <span class=" font-bold  text-gray-800">Розмова щодо</span> <a th:href="${uri}" th:text="${uriHost}">placeholder</a>
+    </h2>
 
     <div class="flex-1 overflow-y-auto mb-4 p-4 bg-white rounded-lg shadow">
         <div id="chat-messages" class="space-y-4">
             <th:block th:each="pair : ${conversation.questionAnswerPairs.questionAnswerPairs}">
                 <div class="User-message bg-blue-100 p-3 rounded-lg">
-                    <div class="font-bold text-blue-600">User</div>
+                    <div class="font-bold text-blue-600">Користувач</div>
                     <div th:text="${pair.getQuestion().questionValue}" class="message-content">placeholder</div>
                 </div>
                 <div class="Bot-message bg-gray-100 p-3 rounded-lg">
-                    <div class="font-bold text-green-600">Bot</div>
+                    <div class="font-bold text-green-600">Система</div>
                     <div th:text="${pair.getAnswer().answerValue}" class="message-content">placeholder</div>
                 </div>
             </th:block>
@@ -38,21 +40,22 @@
     </div>
 
     <form id="chat-form" class="flex items-center">
-        <input
-                type="text"
-                id="message-input"
-                name="message"
-                placeholder="Type your message..."
-                class="flex-1 p-2 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-        >
+    <textarea
+            id="message-input"
+            name="message"
+            placeholder="Повідомлення довільного формату"
+            class="flex-1 p-2 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            rows="2"
+        required
+        ></textarea>
         <button
                 type="submit"
-                class="bg-blue-500 text-white px-4 py-2 rounded-r-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                class="bg-blue-500 text-white px-4 py-4 rounded-r-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
-            Send
+        Надіслати
         </button>
     </form>
+
 </div>
 
 <script>
@@ -66,7 +69,7 @@
         if (!message) return;
 
         // Add user message to chat
-        addMessageToChat('User', message);
+        addMessageToChat('Користувач', message);
 
         // Clear input
         messageInput.value = '';
@@ -75,7 +78,7 @@
         try {
             const response = await fetchStreamWithRetry('/conversation/ask?message=' + encodeURIComponent(message));
             const reader = response.body.getReader();
-            let botMessageElement = addMessageToChat('Bot', '');
+            let botMessageElement = addMessageToChat('Система', '');
             let contentElement = botMessageElement.querySelector('.message-content');
             await processStream(reader, contentElement);
         } catch (error) {
@@ -115,9 +118,9 @@
 
     function addMessageToChat(sender, content) {
         const messageElement = document.createElement('div');
-        messageElement.className = `${sender.toLowerCase()}-message ${sender === 'User' ? 'bg-blue-100' : 'bg-gray-100'} p-3 rounded-lg`;
+        messageElement.className = `${sender.toLowerCase()}-message ${sender === 'Користувач' ? 'bg-blue-100' : 'bg-gray-100'} p-3 rounded-lg`;
         messageElement.innerHTML = `
-            <div class="font-bold ${sender === 'User' ? 'text-blue-600' : 'text-green-600'}">${sender}:</div>
+            <div class="font-bold ${sender === 'Користувач' ? 'text-blue-600' : 'text-green-600'}">${sender}:</div>
             <div class="message-content">${content}</div>
         `;
         chatMessages.appendChild(messageElement);
