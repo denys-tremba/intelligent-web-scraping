@@ -3,22 +3,29 @@ package com.example.intelligentwebscrapping.domain;
 import com.example.intelligentwebscrapping.infrastructure.ApplicationContextProvider;
 import com.example.intelligentwebscrapping.infrastructure.ai.ArtificialIntelligenceFacade;
 import com.example.intelligentwebscrapping.infrastructure.scrapping.UriScrappingFacade;
+import jakarta.persistence.*;
+import org.hibernate.annotations.Fetch;
 
 import java.net.URI;
 import java.util.Locale;
-
+@Entity
 public class Conversation {
+    @Id
+    @GeneratedValue
+    private Long conversationId;
 
+    @Transient
     private Locale locale;
-    private UserId userId;
+    @Convert(converter = UriConverter.class)
     private URI uri;
     private boolean completed;
+    @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private QuestionAnswerPairs questionAnswerPairs = new QuestionAnswerPairs();
 
-    public Conversation(UserId userId) {
-        this.userId = userId;
+    public Conversation() {
         this.locale = Locale.forLanguageTag("Uk-ua");
     }
+
 
     public void enterUri(URI uri) {
         this.uri = uri;
@@ -47,11 +54,30 @@ public class Conversation {
         this.completed = true;
     }
 
-    public UserId getConversationId() {
-        return userId;
-    }
 
     public String getLocaleLanguage() {
         return locale.getLanguage();
+    }
+
+
+    public QuestionAnswerPairs getQuestionAnswerPairs() {
+        return questionAnswerPairs;
+    }
+
+    public void setQuestionAnswerPairs(QuestionAnswerPairs questionAnswerPairs) {
+        this.questionAnswerPairs = questionAnswerPairs;
+    }
+
+    @Override
+    public String toString() {
+        return uri.toString();
+    }
+
+    public Long getConversationId() {
+        return conversationId;
+    }
+
+    public void setConversationId(Long conversationId) {
+        this.conversationId = conversationId;
     }
 }

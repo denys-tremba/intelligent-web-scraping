@@ -10,7 +10,10 @@ import org.springframework.stereotype.Component;
 public class ArtificialIntelligenceFacade {
     private final IAiAssistant IAiAssistant;
 
-    public ArtificialIntelligenceFacade(@Qualifier("aiAssistant") IAiAssistant IAiAssistant) {
+    public ArtificialIntelligenceFacade(
+            @Qualifier("aiAssistant")
+//            @Qualifier("translationAiAssistantProxy")
+            IAiAssistant IAiAssistant) {
         this.IAiAssistant = IAiAssistant;
     }
 

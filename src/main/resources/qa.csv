@@ -9,3 +9,16 @@ Which jdbc type is mapped to from Duration by Hibernate?;NUMERIC
 What annotation you should use under class in case you prefer that JUnit Jupiter execute all test methods on the same test instance?;@TestInstance(Lifecycle.PER_CLASS)
 In contrast to the competing Runner, TestRule, and MethodRule extension points in JUnit 4, the JUnit Jupiter extension model consists of how many concepts?;only one
 How much test engines (TestEngine) is provided by Junit 5? Answer a number;three
+Name JUnit Platform concept for marking and filtering tests;tag
+What action is performed when Junit assumption is invalid by the method?;When an assumption is invalid, the assumption method throws an exception of type org.opentest4j.TestAbortedException to signal that the test should be aborted instead of marked as a failure.
+Is using third-party assertion libraries approved or disapproved by Junit team?;It is strongly approved.
+What happens when @Disabled is applied at the class level?;All test methods within that class are automatically disabled as well.
+Describe only annotation with body to make test disabled on a particular operating system(Windows);@DisabledOnOs(WINDOWS)
+Enumerate 6 types of conditional test executions according to the Junit documentation.;Operating System and Architecture Conditions, Java Runtime Environment Conditions, Native Image Conditions, System Property Conditions, Environment Variable Conditions, Custom Conditions.
+How to ensure deterministic method execution order?;To control the order in which test methods are executed, annotate your test class or test interface with @TestMethodOrder and specify the desired MethodOrderer implementation.
+What is default Test Instance Lifecycle?;PER_METHOD
+Why we need nested tests (annotated with @Nested)?;They facilitate hierarchical thinking about the test structure.
+Which Junit version, test constructors or methods were not allowed to have parameters, prior to?;Junit 5.
+Since JUnit Jupiter 5.10, @RepeatedTest can be configured with a failure threshold. What does it mean?;It signifies the number of failures after which remaining repetitions will be automatically skipped.
+Match Hibernate persistent data description to the state within persistent context. Name the state in which entity has no persistent representation in the database and typically no identifier value has been assigned.;transient
+Match Hibernate persistent data description to the state within persistent context. Name the state in which entity has an associated identifier and is associated with a persistence context. It may or may not physically exist in the database yet.;managed (persistent)

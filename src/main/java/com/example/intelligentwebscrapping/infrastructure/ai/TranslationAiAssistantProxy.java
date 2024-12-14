@@ -43,11 +43,11 @@ public class TranslationAiAssistantProxy implements IAiAssistant{
             logger.info("Translation skipper: {} == {}", localeLanguage, MODEL_LANGUAGE);
             return aiAssistant.chat(conversation, question);
         }
-        TextResult result = translator.translateText(question.value(), null, MODEL_LANGUAGE);
-        logger.info("Translated question from [{}]{} to [{}]{}", localeLanguage, question.value(), MODEL_LANGUAGE, result.getText());
+        TextResult result = translator.translateText(question.getQuestionValue(), null, MODEL_LANGUAGE);
+        logger.info("Translated question from [{}]{} to [{}]{}", localeLanguage, question.getQuestionValue(), MODEL_LANGUAGE, result.getText());
         Answer answer = aiAssistant.chat(conversation, new Question(result.getText()));
-        result = translator.translateText(answer.value(), null, result.getDetectedSourceLanguage());
-        logger.info("Translated answer from [{}]{} to [{}]{}", MODEL_LANGUAGE, answer.value(), localeLanguage, result.getText());
+        result = translator.translateText(answer.getAnswerValue(), null, result.getDetectedSourceLanguage());
+        logger.info("Translated answer from [{}]{} to [{}]{}", MODEL_LANGUAGE, answer.getAnswerValue(), localeLanguage, result.getText());
         return new Answer(result.getText());
     }
 

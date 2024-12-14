@@ -35,7 +35,6 @@ import java.time.LocalDate;
 import java.util.*;
 
 import static com.example.intelligentwebscrapping.infrastructure.ai.EtlPipeline.WEBSITE_CONTEXT_ROOT_KEY;
-import static org.springframework.ai.chat.client.advisor.AbstractChatMemoryAdvisor.CHAT_MEMORY_CONVERSATION_ID_KEY;
 import static org.springframework.ai.chat.client.advisor.AbstractChatMemoryAdvisor.CHAT_MEMORY_RETRIEVE_SIZE_KEY;
 import static org.springframework.ai.chat.client.advisor.QuestionAnswerAdvisor.FILTER_EXPRESSION;
 import static org.springframework.ai.chat.client.advisor.QuestionAnswerAdvisor.RETRIEVED_DOCUMENTS;
@@ -55,12 +54,10 @@ public class AiAssistant implements IAiAssistant {
 		this.vectorStore = vectorStore;
 		this.chatClient = modelBuilder
 				.defaultSystem("""
-						You are a chat support agent. You are an expert in understanding markdown (especially CommonMark specification).
-						Your main task is to retrieve meaning from markdown snippets and answer questions by referring to the context.
-						You should always refer to the provided context while generating answers.
-						If you do not know the exact answer you should respond with phrase "I do not possess requested information".
-						Do your best for your responses to be clear and short as much as possible.
-						Today is {current_date}.
+				Answer the question based on the context below.
+            	Context has format of markdown file snippets (especially CommonMark specification).
+            	Keep the answer short and concise.
+            	Respond "I do not possess requested information" if not sure about the answer.
 					""")
 				.defaultAdvisors(
 //						new SimpleLoggerAdvisor(),
@@ -79,10 +76,10 @@ public class AiAssistant implements IAiAssistant {
 	public Answer chat(Conversation conversation, Question question) {
 		ChatResponse chatResponse = this.chatClient.prompt()
 				.system(s -> s.param("current_date", LocalDate.now().toString()))
-				.user(question.value())
+				.user(question.getQuestionValue())
 				.advisors(a -> a
 						.param(FILTER_EXPRESSION, WEBSITE_CONTEXT_ROOT_KEY + " == '" + conversation.getUriHost() + "'")
-						.param(CHAT_MEMORY_CONVERSATION_ID_KEY, conversation.getConversationId().value())
+//						.param(CHAT_MEMORY_CONVERSATION_ID_KEY, conversation.getConversationId().value())
 						.param(CHAT_MEMORY_RETRIEVE_SIZE_KEY, 10)
 				)
 				.call()

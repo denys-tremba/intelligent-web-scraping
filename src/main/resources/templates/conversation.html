@@ -24,9 +24,16 @@
 
     <div class="flex-1 overflow-y-auto mb-4 p-4 bg-white rounded-lg shadow">
         <div id="chat-messages" class="space-y-4">
-<!--            <div th:each="message : ${messages}">-->
-<!--                -->
-<!--            </div>-->
+            <th:block th:each="pair : ${conversation.questionAnswerPairs.questionAnswerPairs}">
+                <div class="User-message bg-blue-100 p-3 rounded-lg">
+                    <div class="font-bold text-blue-600">User</div>
+                    <div th:text="${pair.getQuestion().questionValue}" class="message-content">placeholder</div>
+                </div>
+                <div class="Bot-message bg-gray-100 p-3 rounded-lg">
+                    <div class="font-bold text-green-600">Bot</div>
+                    <div th:text="${pair.getAnswer().answerValue}" class="message-content">placeholder</div>
+                </div>
+            </th:block>
         </div>
     </div>
 

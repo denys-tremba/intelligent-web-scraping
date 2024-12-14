@@ -24,10 +24,12 @@ public class Stats {
 
     @Override
     public String toString() {
+        long total = missing + hallucination + accuracy;
         char separator = ',';
         return "missing" + separator + "hallucination" + separator + "accuracy" + separator + "score\n" +
                 Stream.of(missing, hallucination, accuracy, accuracy - hallucination)
                         .map(Objects::toString)
-                        .collect(Collectors.joining(Character.toString(separator)));
+                        .collect(Collectors.joining(Character.toString(separator)))
+                + "\n" + missing/total + hallucination/total + accuracy/total + (accuracy-hallucination)/total;
     }
 }

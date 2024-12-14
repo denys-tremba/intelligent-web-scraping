@@ -4,9 +4,9 @@ import java.net.URI;
 import java.util.UUID;
 
 public class IntelligentWebScrappingSystem {
-    private Conversation conversation = new Conversation(new UserId(UUID.randomUUID().toString()));
-    public void startConversation(UserId userId) {
-        conversation = new Conversation(userId);
+    private Conversation conversation = new Conversation();
+    public void startConversation() {
+        conversation = new Conversation();
     }
     public void enterUri(URI uri) {
         conversation.enterUri(uri);
@@ -24,7 +24,13 @@ public class IntelligentWebScrappingSystem {
         conversation.becomeComplete();
     }
 
-    public UserId getConversationId() {
-        return conversation.getConversationId();
+
+
+    public Conversation getConversation() {
+        return conversation;
+    }
+
+    public void setConversation(Conversation conversation) {
+        this.conversation = conversation;
     }
 }

@@ -2,12 +2,10 @@ package com.example.intelligentwebscrapping;
 
 import com.example.intelligentwebscrapping.domain.*;
 import com.example.intelligentwebscrapping.infrastructure.ai.EvaluatorImpl;
-import io.micrometer.observation.ObservationRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.QuestionAnswerAdvisor;
-import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.evaluation.*;
 import org.springframework.ai.model.Content;
@@ -31,10 +29,10 @@ public class ApplicationRunnerImpl implements ApplicationRunner {
     private static final Logger logger = LoggerFactory.getLogger( ApplicationRunnerImpl.class );
 
     public static final String QUERY_SYSTEM = """
-            	You are a chat support agent. You are an expert in understanding markdown files (especially CommonMark specification).
-            	Your main task is to retrieve meaning from markdown and answer questions by referring to the context.
-            	You should always refer to the context while providing strict and helpful answers.
-            	If you do not know the exact answer you should respond with phrase "I do not possess requested information".
+            	Answer the question based on the context below.
+            	Context has format of markdown file snippets (especially CommonMark specification).
+            	Keep the answer short and concise.
+            	Respond "I do not possess requested information" if not sure about the answer.
             """;
     private final ChatClient chatClient;
     private final Evaluator factCheckingEvaluator;
@@ -54,21 +52,22 @@ public class ApplicationRunnerImpl implements ApplicationRunner {
         for (QuestionAnswerPair pair : pairs.getQuestionAnswerPairs()) {
             logger.info("Before processing {}", pair.getQuestion());
             Question question = pair.getQuestion();
-            ChatResponse chatResponse = chatClient.prompt().system(QUERY_SYSTEM).user(question.value()).call().chatResponse();
+            ChatResponse chatResponse = chatClient.prompt().system(QUERY_SYSTEM).user(question.getQuestionValue()).call().chatResponse();
             String claim = chatResponse.getResult().getOutput().getContent();
             if (claim.contains("I do not possess")) {
                 stats.incrementMissing();
                 continue;
             }
             List<Content> context = chatResponse.getMetadata().get(QuestionAnswerAdvisor.RETRIEVED_DOCUMENTS);
-            EvaluationRequest evaluationRequest = new EvaluationRequest(question.value(), context, claim);
+            EvaluationRequest evaluationRequest = new EvaluationRequest(question.getQuestionValue(), context.subList(0,1), claim);
             EvaluationResponse evaluationResponse = factCheckingEvaluator.evaluate(evaluationRequest);
             if (!evaluationResponse.isPass()) {
-                doWhenGroundedFactualityFailed(stats, claim, question.value(), pair.getAnswer().value());
+                doWhenGroundedFactualityFailed(stats, claim, question.getQuestionValue(), pair.getAnswer().getAnswerValue());
             } else {
                 stats.incrementAccuracy();
             }
             logger.info("Stats after processing {} : {}", pair.getQuestion(), stats.toString());
+            Thread.sleep(1000 * 20);
         }
         persistStatsToFileSystem(stats);
     }
@@ -85,6 +84,8 @@ public class ApplicationRunnerImpl implements ApplicationRunner {
         boolean response = relevancyEvaluator.evaluate(userText, actual, expectedAnswer);
         if (!response) {
             stats.incrementHallucination();
+        } else {
+            stats.incrementAccuracy();
         }
     }
 
