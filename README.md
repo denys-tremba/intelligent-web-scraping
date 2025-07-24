@@ -6,3 +6,6 @@ Accomplished tasks with Java (before those convenient  features have appeared fo
 - boost of context window constraint (tokens threshold).
 
 The application was capable to index and then interpret the content of target website containing documentation (~50K lines of HTML per page) within few seconds.
+
+## Demo
+![](demo.gif)
